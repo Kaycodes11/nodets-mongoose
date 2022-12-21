@@ -18,12 +18,32 @@ export const seedUsers = async (
   }
 };
 
+export const isUsernameAvailable = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const username = req.body.username;
+    const user = await User.find()
+      .where({ username: new RegExp('^' + username + '$', 'i') })
+      .select("-password -__v");
+    console.log(`user`, user);
+    if (user.length) {
+      throw new HttpException(409, "This Username is already taken");
+    } else {
+      res.send("username available to use").status(200);
+    }
+  } catch (e: any) {
+    next(e);
+  }
+};
+
 export const updateUser = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {};
-
 
 export const deleteUser = async (
   req: Request,
@@ -31,16 +51,20 @@ export const deleteUser = async (
   next: NextFunction
 ) => {};
 
-
 export const getUser = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
-
+) => {
+  const user = await User.findById(req.params.userId);
+  res.status(200).json(user);
+};
 
 export const getUsers = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  const users = await User.find();
+  res.status(200).json(users);
+};

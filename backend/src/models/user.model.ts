@@ -4,10 +4,8 @@ import * as bcrypt from "bcrypt";
 import moment from "moment";
 
 interface RefreshTokenSubDocument {
-  _id?: Schema.Types.ObjectId;
-  web: string;
-  mobile?: string;
-  admin?: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 export interface IUser {
@@ -20,7 +18,7 @@ export interface IUser {
   username: string;
   password: string;
   isValidated: boolean;
-  refreshTokens?: RefreshTokenSubDocument;
+  refreshTokens?: RefreshTokenSubDocument[];
 }
 
 type UserQueryHelpers = {};
@@ -81,9 +79,15 @@ const UserSchema = new Schema<
       minlength: [6, "password must be at least six character"],
     },
     isValidated: { type: Boolean, default: false },
-    refreshTokens: new Schema<RefreshTokenSubDocument>({
-      web: {type: String, default: ""}
-    }),
+    refreshTokens: [
+      new Schema<RefreshTokenSubDocument>(
+        {
+          accessToken: String,
+          refreshToken: String,
+        },
+        { timestamps: false, _id: false }
+      ),
+    ],
   },
   { timestamps: true }
 );
@@ -99,7 +103,7 @@ UserSchema.static("createTokens", function createTokens(user): {
   const accessToken = jwt.sign(
     { id: user._id, email: user.email },
     process.env.ACCESS_TOKEN_SECRET_IS as string,
-    { algorithm: "HS256", expiresIn: "1m" }
+    { algorithm: "HS256", expiresIn: "10m" }
   );
   const refreshToken = jwt.sign(
     { id: user._id, email: user.email },

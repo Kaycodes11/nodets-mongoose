@@ -1,22 +1,40 @@
 import * as dotenv from "dotenv";
-import express, {
-  Application,
-  ErrorRequestHandler,
-} from "express";
+import express, { Application, ErrorRequestHandler } from "express";
+import { engine } from "express-handlebars";
 import cookieParser from "cookie-parser";
 import { Server } from "http";
 import helmet from "helmet";
 import cors from "cors";
 import database from "./database";
 import AllRoutes from "./routes";
-import mongoose from "mongoose";
 import passport from "passport";
 import { JwtStrategy } from "./middlewares/jwtStrategy.middleware";
 import { LocalStrategy } from "./middlewares/localStrategy.middleware";
+import * as path from "path";
+import transporter from "./mail";
 
 dotenv.config();
 
 const app: Application = express();
+
+app.engine(
+  "hbs",
+  engine({
+    extname: ".hbs",
+    defaultLayout: "main",
+    helpers: {
+      getShortComment(comment: string) {
+        if (comment.length < 64) {
+          return comment;
+        }
+
+        return comment.substring(0, 61) + "...";
+      },
+    },
+  })
+);
+app.set("view engine", "hbs");
+app.set("views", path.join(__dirname, "./views")); // https://stackabuse.com/guide-to-handlebars-templating-engine-for-node/
 
 // global middlewares
 
@@ -41,11 +59,33 @@ JwtStrategy(process.env.ACCESS_TOKEN_SECRET_IS!);
 LocalStrategy();
 
 // global routes
+app.get("/", (req: express.Request, res: express.Response) => {
+  // on the defaultLayout i.e. main.hbs it has {{{ body }}} so what rendered here will sit there
+  res.render("home", {
+    posts: [
+      {
+        author: "Janith Kasun",
+        image: "https://picsum.photos/500/500",
+        comments: [
+          "This is the first comment",
+          "This is the second comment",
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum nec fermentum ligula. Sed vitae erat lectus.",
+        ],
+      },
+      {
+        author: "John Doe",
+        image: "https://picsum.photos/500/500?2",
+        comments: [],
+      },
+    ],
+  });
+});
+
 app.use(AllRoutes);
 
 // error handler
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  const status = res.statusCode == 200 ? 500 : res.statusCode;
+  const status = err.status == 200 ? 500 : err.status;
   res.status(status).json({ message: err.message });
 };
 
@@ -55,6 +95,20 @@ const port = process.env.PORT || 8800;
 
 // database and server init
 try {
+  transporter
+    .sendMail({
+      from: '"Sender Name" <from@example.net>',
+      to: "to@example.com",
+      subject: "Hello from node js with typescript",
+      text: "Hello world?",
+      html: "<strong>Hello world?</strong>",
+      headers: { "x-my-header": "test header" },
+    })
+    .then((r) => console.log("r", r))
+    .catch((e) => console.log(e.message));
+
+  console.log(`mail sent`);
+
   database();
   // https://stackoverflow.com/questions/54485936/what-are-all-the-mongoose-events-and-where-are-they-documented
 

@@ -3,16 +3,22 @@ import * as UserController from "../controllers/user.controller";
 
 const router = express.Router();
 
+// @protected
 router.get("/", UserController.getUsers);
 
-router.get(":/userId", UserController.getUser);
-
-router.put("/:userId", UserController.updateUser);
-
-router.delete("/:userId", UserController.deleteUser);
-
+// @protected
 router.post("/seed", UserController.seedUsers);
 
-router.get("/available/:userId");
+// @protected
+router.get(":/userId", UserController.getUser);
+
+// @protected
+router.put("/:userId", UserController.updateUser);
+
+// @protected
+router.delete("/:userId", UserController.deleteUser);
+
+// @public
+router.post("/available/username", UserController.isUsernameAvailable);
 
 export default router;

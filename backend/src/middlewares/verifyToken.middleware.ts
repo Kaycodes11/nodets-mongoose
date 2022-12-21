@@ -1,7 +1,13 @@
-import jwt, { JsonWebTokenError, TokenExpiredError } from "jsonwebtoken";
+import jwt, {
+  JsonWebTokenError,
+  JwtPayload,
+  TokenExpiredError,
+} from "jsonwebtoken";
+import { Types } from "mongoose";
 import { NextFunction, Request, Response } from "express";
 import { HttpException } from "./error.middleware";
 import User from "../models/user.model";
+import { refreshToken } from "../controllers/auth.controller";
 export const verifyRefreshToken = async (
   req: Request,
   res: Response,
@@ -43,15 +49,24 @@ export const verifyAccessTokenToAuthenticate = async (
 ) => {
   const accessToken = req.headers.authorization?.split(" ")[1].trim() ?? "";
   try {
+    // verify token with secret
     const decoded = jwt.verify(
       accessToken,
       process.env.ACCESS_TOKEN_SECRET_IS as string
     ) as { id: string; email: string; iat: number; exp: number };
 
-    // prettier-ignore
-    const user = decoded.id && (await User.findById(decoded.id).select("-password -__v"));
+    // verify given accessToken with db
+    const user =
+      decoded.id &&
+      (await User.findOne({
+        _id: new Types.ObjectId(decoded.id),
+        refreshTokens: { $elemMatch: { accessToken: accessToken } },
+      }).select("-password -__v"));
 
-    if (!user) return next(new HttpException(400, "wrong credentials"));
+    if (!user)
+      return next(
+        new HttpException(400, "This accessToken is not found within db")
+      );
 
     // noinspection SpellCheckingInspection
     const userInfo = user.toJSON({ virtuals: true, getters: true });
@@ -61,11 +76,33 @@ export const verifyAccessTokenToAuthenticate = async (
     next();
   } catch (e: any) {
     if (e instanceof TokenExpiredError) {
+      console.log("TokenExpiredError Here");
       return next(new HttpException(401, e.message));
     }
     if (e instanceof JsonWebTokenError) {
-      return next(new HttpException(401, e.message));
+      console.log("JsonWebTokenError Here");
+      return next(new HttpException(401, "invalid token"));
     }
+
     next(new HttpException(e.status, e.message));
+  }
+};
+
+export const removeToken = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const accessToken = req.headers.authorization?.split(" ")[1].trim() ?? "";
+  try {
+    // @ts-ignore
+    await User.findByIdAndUpdate(req.user.id, {
+      $pull: { refreshTokens: { accessToken: accessToken } },
+    }).then((document) => {
+      console.log(document);
+    });
+    next();
+  } catch (e: any) {
+    next(e);
   }
 };
