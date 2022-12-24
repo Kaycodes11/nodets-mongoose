@@ -56,8 +56,12 @@ export const getUser = async (
   res: Response,
   next: NextFunction
 ) => {
-  const user = await User.findById(req.params.userId);
-  res.status(200).json(user);
+  try {
+    const user = await User.findById(req.params.userId);
+    res.status(200).json(user);
+  } catch (e) {
+    next(e);
+  }
 };
 
 export const getUsers = async (

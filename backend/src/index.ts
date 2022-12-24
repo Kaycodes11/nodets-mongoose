@@ -95,19 +95,18 @@ const port = process.env.PORT || 8800;
 
 // database and server init
 try {
-  transporter
-    .sendMail({
-      from: '"Sender Name" <from@example.net>',
-      to: "to@example.com",
-      subject: "Hello from node js with typescript",
-      text: "Hello world?",
-      html: "<strong>Hello world?</strong>",
-      headers: { "x-my-header": "test header" },
-    })
-    .then((r) => console.log("r", r))
-    .catch((e) => console.log(e.message));
+  // nodemailer attachments
 
-  console.log(`mail sent`);
+  // const details = {
+  //   from: '"Sender Name" <from@example.net>',
+  //   to: "to@example.com",
+  //   subject: "Hello from node js with typescript",
+  //   text: "Hello world?",
+  //   html: "<strong>Hello, this is an email from nodes ts?</strong>",
+  //   headers: { "x-my-header": "test header" },
+  // };
+  // prettier-ignore
+  // transporter.sendMail(details).then((r) => console.log("mail-response", r)).catch((e) => console.log("MAIL ERROR: ", e.message));
 
   database();
   // https://stackoverflow.com/questions/54485936/what-are-all-the-mongoose-events-and-where-are-they-documented
