@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import Trip from '../models/trip.model';
-import { tripSeed } from "../seeds/flight.seed";
+import { tripSeed } from "../seeds/trip.seed";
 import { HttpException } from "../middlewares/error.middleware";
 import { Error } from 'mongoose';
 

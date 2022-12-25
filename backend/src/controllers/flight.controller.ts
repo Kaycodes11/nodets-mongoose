@@ -8,7 +8,7 @@ export const getFlights = async (
   next: NextFunction
 ) => {};
 
-export const updatedFlight = async (
+export const updateFlight = async (
   req: Request,
   res: Response,
   next: NextFunction

@@ -1,4 +1,4 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, SchemaTypes } from 'mongoose';
 import moment from "moment/moment";
 
 export enum FareType {
@@ -27,6 +27,7 @@ export interface ITrip {
   type: "Domestic" | "International";
   fareType: FareType | null;
   tripType: TripType | null;
+  flights?: Schema.Types.ObjectId;
 }
 
 const TripSchema = new Schema<ITrip>(
@@ -45,6 +46,7 @@ const TripSchema = new Schema<ITrip>(
     type: { type: String, lowercase: true, trim: true, default: "Domestic" },
     fareType: { type: String, enum: FareType, default: FareType.REGULAR_FARE },
     tripType: { type: String, enum: TripType },
+    flights: [{ type: Schema.Types.ObjectId, ref: "flights" }],
   },
   { timestamps: true, toJSON: { virtuals: true, getters: true } }
 );
